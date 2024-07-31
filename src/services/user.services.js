@@ -78,4 +78,16 @@ const logout = async (user, res) => {
   res.cookie("jwt", "", { maxAge: 0 });
 };
 
-export default { signup, signin, logout };
+const me = async (user) => {
+  const data = validate(logoutUserValidation, user);
+
+  const getUser = await User.findById(user).select("-password");
+
+  if (!getUser) {
+    throw new ResponseError("404", "USER NOT FOUND");
+  }
+
+  return getUser;
+};
+
+export default { signup, signin, logout, me };

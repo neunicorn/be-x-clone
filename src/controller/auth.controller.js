@@ -36,6 +36,23 @@ const signin = async (req, res, next) => {
   }
 };
 
+const me = async (req, res, next) => {
+  try {
+    console.log("IN TO ME");
+    const user = req.jwt.user_id;
+
+    const result = await userService.me(user);
+
+    return res.status(200).json({
+      status: true,
+      message: "GET PROFILE SUCCESS",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const logout = async (req, res, next) => {
   try {
     const user = req.jwt.user_id;
@@ -55,4 +72,5 @@ export default {
   signup,
   signin,
   logout,
+  me,
 };
