@@ -1,18 +1,7 @@
 import Joi from "joi";
 
-const signupUserValidation = Joi.object({
-  username: Joi.string().max(35).required(),
-  fullName: Joi.string().max(100).required(),
-  password: Joi.string().min(8).required(),
-  email: Joi.string().max(200).email().required(),
-});
+const usernameValidation = Joi.string().max(200).required();
 
-const signinUserValidation = Joi.object({
-  username: Joi.string().max(35).optional(),
-  email: Joi.string().max(200).email().optional(),
-  password: Joi.string().min(8).required(),
-});
+const idValidation = Joi.string().hex().length(24).message("WRONG ID");
 
-const logoutUserValidation = Joi.string().required();
-
-export { signupUserValidation, signinUserValidation, logoutUserValidation };
+export { usernameValidation, idValidation };

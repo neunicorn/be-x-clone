@@ -1,93 +1,101 @@
-import User from "../model/user.model.js";
 import { ResponseError } from "../error/response-error.js";
+import Notification from "../model/notification.model.js";
+import User from "../model/user.model.js";
 import {
-  logoutUserValidation,
-  signinUserValidation,
-  signupUserValidation,
+  idValidation,
+  usernameValidation,
 } from "../validation/user.validation.js";
 import { validate } from "../validation/validation.js";
-import bcrypt from "bcrypt";
-import { generateTokenAndSetCookie } from "../lib/utils/generateToken.js";
+import mongoose from "mongoose";
 
-const signup = async (request) => {
-  console.log("USER SERVICE IN");
-  const user = validate(signupUserValidation, request);
+const getUserProfile = async (username) => {
+  const data = validate(usernameValidation, username);
 
-  console.log("VALIDATION COMPLETE");
-
-  const checkUser = await User.findOne({ username: user.username });
-  if (checkUser) {
-    throw new ResponseError(400, "Username Already Exists");
-  }
-  const checkEmail = await User.findOne({ email: user.email });
-  if (checkEmail) {
-    throw new ResponseError(400, "Email Already Taken");
+  const profile = await User.findOne({ username }).select("-password");
+  if (!profile) {
+    throw new ResponseError("404", "USER NOT FOUND");
   }
 
-  //hash password
-  user.password = await bcrypt.hash(user.password, 10);
-
-  const createUser = new User(user);
-
-  if (createUser) {
-    await createUser.save();
-  }
-
-  return createUser;
+  return profile;
 };
 
-const signin = async (request) => {
-  const data = validate(signinUserValidation, request);
+const getSuggestedProfile = async (user_id) => {
+  user_id = validate(idValidation, user_id);
 
-  const user = await User.findOne({ username: data.username });
-  const email = await User.findOne({ email: data.email });
+  const userAlreadyFollowed = await User.findById(user_id).select("following");
 
-  if (!(user || email)) {
-    throw new ResponseError(400, "Username or email invalid");
-  }
+  console.log(user_id);
 
-  let userLogin = "";
-  if (user) {
-    userLogin = user;
-  } else {
-    userLogin = email;
-  }
+  const users = await User.aggregate([
+    {
+      $match: {
+        _id: { $ne: new mongoose.Types.ObjectId(user_id) },
+      },
+    },
+    {
+      $sample: { size: 10 },
+    },
+  ]);
 
-  const isPasswordCorrect = await bcrypt.compare(
-    data.password,
-    userLogin?.password || ""
+  const filterUsers = users.filter(
+    (user) => !userAlreadyFollowed.following.includes(user._id)
   );
 
-  if (!isPasswordCorrect) {
-    throw new ResponseError(400, "Invalid Username or Password");
-  }
+  const suggestedUser = filterUsers.slice(0, 4);
 
-  return userLogin;
+  suggestedUser.forEach((user) => delete user.password);
+
+  return suggestedUser;
 };
 
-const logout = async (user, res) => {
-  const data = validate(logoutUserValidation, user);
-  console.log("");
+const followOrUnfollow = async (id, user_id) => {
+  // CHECK IF DATA NULL OR NOT
+  const currentUserId = validate(idValidation, user_id);
+  const userTargetId = validate(idValidation, id);
 
-  const newUser = await User.findById(user);
+  // Check Data on DATABASE
+  const userToModify = await User.findById(userTargetId);
+  const currentUser = await User.findById(currentUserId);
 
-  if (!newUser) {
-    throw new ResponseError("404", "USER NOT FOUND");
+  if (id === user_id) {
+    throw new ResponseError(400, "YOU CAN'T FOLLOW YOUR SELF");
   }
 
-  res.cookie("jwt", "", { maxAge: 0 });
-};
-
-const me = async (user) => {
-  const data = validate(logoutUserValidation, user);
-
-  const getUser = await User.findById(user).select("-password");
-
-  if (!getUser) {
-    throw new ResponseError("404", "USER NOT FOUND");
+  if (!(userToModify && currentUser)) {
+    throw new ResponseError(404, "USER NOT FOUND");
   }
 
-  return getUser;
+  const isFollowing = currentUser.following.includes(id);
+
+  if (isFollowing) {
+    await User.findByIdAndUpdate(id, { $pull: { followers: user_id } });
+    await User.findByIdAndUpdate(user_id, { $pull: { following: id } });
+
+    return false;
+  } else {
+    // follow
+    await User.findByIdAndUpdate(id, { $push: { followers: user_id } });
+    await User.findByIdAndUpdate(user_id, { $push: { following: id } });
+
+    // TODO: SEND NOTIFICATION TO TARGET USER
+
+    const newNotification = new Notification({
+      type: "follow",
+      from: currentUserId,
+      to: userTargetId,
+    });
+
+    await newNotification.save();
+
+    return true;
+  }
 };
 
-export default { signup, signin, logout, me };
+const updateProfile = async (id) => {};
+
+export default {
+  getUserProfile,
+  getSuggestedProfile,
+  followOrUnfollow,
+  updateProfile,
+};
