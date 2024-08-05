@@ -1,4 +1,5 @@
 import express from "express";
+import { multer } from "../middleware/multer.js";
 import { jwtAuth } from "../middleware/jwtAuth.js";
 import userController from "../controller/user.controller.js";
 

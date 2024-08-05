@@ -56,7 +56,26 @@ const followOrUnfollow = async (req, res, next) => {
   }
 };
 
-const updateProfile = async (req, res, next) => {};
+const updateProfile = async (req, res, next) => {
+  try {
+    console.log("MASUK BRO KE UPDATE");
+    const { user_id } = req.jwt;
+    const data = req.body;
+    const image = req.file;
+
+    const result = await userServices.updateProfile(data, user_id, image);
+
+    delete result.password;
+
+    return res.status(200).json({
+      status: true,
+      message: "UPDATE PROFILE SUCCESS",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export default {
   getUserProfile,
