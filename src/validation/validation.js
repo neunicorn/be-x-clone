@@ -8,6 +8,7 @@ const validate = (schema, request) => {
   });
 
   if (result.error) {
+    console.log("ERRORR");
     throw new ResponseError(400, result.error.message);
   } else {
     return result.value;
