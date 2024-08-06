@@ -1,5 +1,51 @@
 import postServices from "../services/post.services.js";
 
+const getAllPost = async (req, res, next) => {
+  try {
+    const result = await postServices.getAllPost();
+
+    return res.status(200).json({
+      status: true,
+      message: "FETCH DATA SUCCESS",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getOnePost = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.jwt;
+
+    const result = await postServices.getOnePost(id, user_id);
+
+    return res.status(200).json({
+      status: true,
+      message: "FETCH DATA SUCCES",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getLikedPost = async (req, res, next) => {
+  try {
+    //todo
+    const { userId } = req.params;
+
+    const result = await postServices.getLikedPostService(userId);
+
+    return res.status(200).json({
+      status: true,
+      message: "DATA FETCHED",
+      data: result,
+    });
+  } catch (error) {}
+};
+
 const createPost = async (req, res, next) => {
   try {
     // TODO
@@ -78,6 +124,9 @@ const deletePost = async (req, res, next) => {
 };
 
 export default {
+  getAllPost,
+  getOnePost,
+  getLikedPost,
   createPost,
   createCommentPost,
   likeUnlikePost,

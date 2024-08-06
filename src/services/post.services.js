@@ -14,6 +14,71 @@ import { idValidation } from "../validation/user.validation.js";
 import { validate } from "../validation/validation.js";
 import { ResponseError } from "../error/response-error.js";
 
+const getAllPost = async () => {
+  const post = await Post.find()
+    .sort({ createdAt: -1 })
+    .populate({ path: "user", select: "-password" });
+
+  if (!post) {
+    throw new ResponseError(404, "FETCH DATA FAILED");
+  }
+
+  if (post.length === 0) {
+    return [];
+  }
+
+  return post;
+};
+
+const getOnePost = async (post_id, user_id) => {
+  // validate id
+  post_id = validate(idValidation, post_id);
+  user_id = validate(idValidation, user_id);
+
+  //validate user
+  const user = User.findById(user_id).select("-password");
+  if (!user) {
+    throw new ResponseError(404, "USER NOT FOUND");
+  }
+
+  // fetch post data by id
+  const post = await Post.findById(post_id)
+    .populate({
+      path: "user",
+      select: "-password",
+    })
+    .populate({
+      path: "comments.user",
+      select: "-password",
+    });
+  if (!post) {
+    throw new ResponseError(404, "POST NOT FOUND");
+  }
+
+  return post;
+};
+
+const getLikedPostService = async (user_id) => {
+  //validate id
+  user_id = validate(idValidation, user_id);
+
+  //get user
+  const user = await User.findById(user_id);
+
+  //validate user
+  if (!user) {
+    throw new ResponseError(404, "USER NOT FOUND");
+  }
+
+  //get likedpost by user
+  const likedPost = await Post.find({ _id: { $in: user.postLiked } })
+    .populate({ path: "user", select: "-password" })
+    .populate({ path: "comments.user", select: "-password" });
+
+  console.log(likedPost);
+  return likedPost;
+};
+
 const createPostService = async (request, id) => {
   // validate the ID and DATA REQUEST
   id = validate(idValidation, id);
@@ -43,9 +108,10 @@ const createPostService = async (request, id) => {
 };
 
 /**
- * THIS IS A SERVICE TO CREATE A COMMENT
+ * Service to create comment in a post
  *
- * **/
+ * @param -> `post id`, `user id`, and the `comment` or `text`
+ **/
 const createCommentService = async (post_id, user_id, text) => {
   //validate
 
@@ -103,12 +169,14 @@ const likeUnlikePostService = async (post_id, user_id) => {
   if (isLiked) {
     //UNLIKED POST
     await Post.findByIdAndUpdate(post_id, { $pull: { likes: user_id } });
+    await User.findByIdAndUpdate(user_id, { $pull: { postLiked: post_id } });
     // await Notification.findOneAndDelete({from: user_id, to: post.user, })
 
     return false;
   } else {
     // LIKE THE POST
     await Post.findByIdAndUpdate(post_id, { $push: { likes: user_id } });
+    await User.findByIdAndUpdate(user_id, { $push: { postLiked: post_id } });
 
     //make notification
     const notification = new Notification({
@@ -148,6 +216,9 @@ const deletePostService = async (post_id, user_id) => {
 };
 
 export default {
+  getOnePost,
+  getAllPost,
+  getLikedPostService,
   createPostService,
   createCommentService,
   likeUnlikePostService,

@@ -8,4 +8,4 @@ export const userRouter = express.Router();
 userRouter.get("/profile/:username", jwtAuth(), userController.getUserProfile);
 userRouter.get("/suggested", jwtAuth(), userController.getSuggestedProfile);
 userRouter.post("/follow/:id", jwtAuth(), userController.followOrUnfollow);
-userRouter.put("/update", jwtAuth(), userController.updateProfile);
+userRouter.patch("/update", jwtAuth(), userController.updateProfile);
