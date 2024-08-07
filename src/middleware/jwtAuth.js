@@ -5,9 +5,7 @@ import { ResponseError } from "../error/response-error.js";
 export const jwtAuth = () => {
   return async (req, res, next) => {
     try {
-      console.log("INNN TO JWT MIDDLEWARE");
       let authorization = req.cookies.jwt;
-      console.log(authorization);
       if (!authorization) {
         throw { code: 401, message: "UNAUTHORIZED" };
       }

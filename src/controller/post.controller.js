@@ -16,14 +16,53 @@ const getAllPost = async (req, res, next) => {
 
 const getOnePost = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const { user_id } = req.jwt;
+    const { postId } = req.params;
 
-    const result = await postServices.getOnePost(id, user_id);
+    const result = await postServices.getOnePost(postId, user_id);
 
     return res.status(200).json({
       status: true,
       message: "FETCH DATA SUCCES",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getUserPosts = async (req, res, next) => {
+  try {
+    const { username } = req.params;
+
+    const result = await postServices.getUserPostsService(username);
+
+    return res.status(200).json({
+      status: true,
+      code: 200,
+      message: `GET POST USER: ${username.toUpperCase()} SUCCESS`,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getFollowingPost = async (req, res, next) => {
+  try {
+    const { user_id } = req.jwt;
+    const result = await postServices.getFollowingPostService(user_id);
+
+    let msg = "";
+    if (result.length === 0) {
+      msg = "USER NOT FOLLOWING ANYONE";
+    } else {
+      msg = "FETH DATA SUCCESS";
+    }
+
+    return res.status(200).json({
+      status: true,
+      code: 200,
+      message: msg,
       data: result,
     });
   } catch (error) {
@@ -43,7 +82,9 @@ const getLikedPost = async (req, res, next) => {
       message: "DATA FETCHED",
       data: result,
     });
-  } catch (error) {}
+  } catch (error) {
+    next(error);
+  }
 };
 
 const createPost = async (req, res, next) => {
@@ -126,6 +167,8 @@ const deletePost = async (req, res, next) => {
 export default {
   getAllPost,
   getOnePost,
+  getUserPosts,
+  getFollowingPost,
   getLikedPost,
   createPost,
   createCommentPost,
