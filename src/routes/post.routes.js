@@ -1,6 +1,6 @@
 import express from "express";
 import { jwtAuth } from "../middleware/jwtAuth.js";
-import postController from "../controller/post.controller.js";
+import postController from "../controller/post.controllers.js";
 
 export const postRouter = express.Router();
 
