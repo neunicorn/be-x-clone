@@ -26,6 +26,8 @@ const signin = async (req, res, next) => {
 
     generateTokenAndSetCookie(result._id, res);
 
+    // delete result?.data.password;
+
     return res.status(200).json({
       status: true,
       message: "USER_LOGGEDIN_SUCCESSFULLY",

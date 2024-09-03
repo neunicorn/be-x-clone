@@ -42,7 +42,7 @@ const signin = async (request) => {
   const email = await User.findOne({ email: data.email });
 
   if (!(user || email)) {
-    throw new ResponseError(400, "Username or email invalid");
+    throw new ResponseError(400, "invalid username or password");
   }
 
   let userLogin = "";
