@@ -122,10 +122,10 @@ const createPostService = async (request, id) => {
   id = validate(idValidation, id);
   request = validate(postValidation, request);
 
-  // if(request.img){
-  //   const uploadImg = await cloudinary.uploader.upload(request.img);
-  //   request.img = uploadImg.secure_url;
-  // }
+  if(request.img){
+    const uploadImg = await cloudinary.uploader.upload(request.img);
+    request.img = uploadImg.secure_url;
+  }
 
   const newPost = new Post({
     user: id,
