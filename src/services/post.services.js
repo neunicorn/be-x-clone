@@ -122,7 +122,7 @@ const createPostService = async (request, id) => {
   id = validate(idValidation, id);
   request = validate(postValidation, request);
 
-  if(request.img){
+  if (request.img) {
     const uploadImg = await cloudinary.uploader.upload(request.img);
     request.img = uploadImg.secure_url;
   }
@@ -178,6 +178,8 @@ const likeUnlikePostService = async (post_id, user_id) => {
   post_id = validate(idValidation, post_id);
   user_id = validate(idValidation, user_id);
 
+  let resultLiked = false;
+
   // check user and post
 
   const user = await User.findById(user_id).select("-password");
@@ -187,7 +189,7 @@ const likeUnlikePostService = async (post_id, user_id) => {
     throw new ResponseError(404, "POST NOT FOUND");
   }
 
-  const isLiked = post.likes.includes(user._id);
+  const isLiked = post.likes.includes(user_id);
 
   if (isLiked) {
     //UNLIKED POST
@@ -195,7 +197,11 @@ const likeUnlikePostService = async (post_id, user_id) => {
     await User.findByIdAndUpdate(user_id, { $pull: { postLiked: post_id } });
     // await Notification.findOneAndDelete({from: user_id, to: post.user, })
 
-    return false;
+    const updatedLikes = post.likes.filter(
+      (id) => id.toString() !== user_id.toString()
+    );
+
+    return { resultLiked, updatedLikes };
   } else {
     // LIKE THE POST
     await Post.findByIdAndUpdate(post_id, { $push: { likes: user_id } });
@@ -209,7 +215,12 @@ const likeUnlikePostService = async (post_id, user_id) => {
     });
     await notification.save();
 
-    return true;
+    const updatedLikes = post.likes;
+    console.log(updatedLikes);
+
+    resultLiked = true;
+
+    return { resultLiked, updatedLikes };
   }
 };
 

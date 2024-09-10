@@ -2,7 +2,7 @@ import Joi from "joi";
 
 const postValidation = Joi.object({
   text: Joi.string().max(300).optional(),
-  img: Joi.string().optional(),
+  img: Joi.optional(),
 }).or("text", "img");
 
 const commentValidation = Joi.string()

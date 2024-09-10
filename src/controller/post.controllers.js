@@ -129,11 +129,12 @@ const likeUnlikePost = async (req, res, next) => {
     const { user_id } = req.jwt;
     const { id } = req.params;
 
-    const result = await postServices.likeUnlikePostService(id, user_id);
+    const { resultLiked, updatedLikes } =
+      await postServices.likeUnlikePostService(id, user_id);
 
     let resultMsg = "";
 
-    if (result) {
+    if (resultLiked) {
       resultMsg = "POST LIKED";
     } else {
       resultMsg = "POST UNLIKED";
@@ -142,6 +143,7 @@ const likeUnlikePost = async (req, res, next) => {
     return res.status(200).json({
       status: true,
       message: resultMsg,
+      data: updatedLikes,
     });
   } catch (error) {
     next(error);
